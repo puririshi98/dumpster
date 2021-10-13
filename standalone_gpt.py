@@ -14,10 +14,9 @@
 # limitations under the License.
 
 """GPT-2 model."""
-from apex.normalization import FusedLayerNorm as LayerNorm
-from apex.transformer.functional import FusedScaleMaskSoftmax as FusedScaleMaskSoftmax
-from apex.transformer import tensor_parallel, parallel_state
 import enum
+from apex.normalization import FusedLayerNorm as LayerNorm
+from apex.transformer import tensor_parallel, parallel_state
 import torch
 from torch.autograd import Variable
 from torch.nn.parameter import Parameter
@@ -34,7 +33,7 @@ class ModelType(enum.Enum):
 class LayerType(enum.Enum):
     encoder = 1
     decoder = 2
- 
+
 class AttnType(enum.Enum):
     self_attn = 1
     cross_attn = 2
@@ -65,7 +64,8 @@ def bias_gelu_back(g, bias, y):
     x = bias + y
     tanh_out = torch.tanh(0.79788456 * x * (1 + 0.044715 * x * x))
     # sqrt(2/pi) * 3 * 0.044715 -> 0.1070322243
-    ff = 0.5 * x * ((1 - tanh_out * tanh_out) * (0.79788456 + 0.1070322243 * x * x)) + 0.5 * (1 + tanh_out)
+    ff = 0.5 * x * ((1 - tanh_out * tanh_out) *
+        (0.79788456 + 0.1070322243 * x * x)) + 0.5 * (1 + tanh_out)
     return ff*g
 
 class MegatronModule(torch.nn.Module):
@@ -180,21 +180,6 @@ class GeLUFunction(torch.autograd.Function):
 
 bias_gelu_impl = GeLUFunction.apply
 
-class ModelType(enum.Enum):
-    encoder_or_decoder = 1
-    encoder_and_decoder = 2
-
-class LayerType(enum.Enum):
-    encoder = 1
-    decoder = 2
- 
-class AttnType(enum.Enum):
-    self_attn = 1
-    cross_attn = 2
-
-class AttnMaskType(enum.Enum):
-    padding = 1
-    causal = 2
 
 def get_linear_layer(rows, columns, init_method):
     """Simple linear layer with weight initialization."""
